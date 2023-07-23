@@ -47,13 +47,13 @@ export default function PublicPlaceGallery({ place }) {
         <div>
           {place.photos?.[0] && (
             <div>
-              <Image className=" object-cover h-screen" src={place.photos[0]} />
+              <Image className="object-cover h-screen" src={place.photos[0]} />
             </div>
           )}
         </div>
         <div className="grid ">
           {place.photos?.[1] && (
-            <Image className=" object-cover h-full " src={place.photos[1]} />
+            <Image className="object-cover h-full" src={place.photos[1]} />
           )}
           <div className="overflow-hidden">
             {place.photos?.[2] && (
