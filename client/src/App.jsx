@@ -13,7 +13,7 @@ import PublicPlacePage from "./pages/PublicPlacePage";
 import UserBookingsPage from "./pages/UserBookingsPage";
 import SingleBookingPage from "./pages/SingleBookingPage";
 
-axios.defaults.baseURL = "http://localhost:4000";
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
 
 function App() {
