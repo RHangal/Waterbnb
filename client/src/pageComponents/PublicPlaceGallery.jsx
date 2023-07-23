@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Image from "./Image";
 
 export default function PublicPlaceGallery({ place }) {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
@@ -33,7 +34,7 @@ export default function PublicPlaceGallery({ place }) {
           {place?.photos?.length > 0 &&
             place.photos.map((photo, index) => (
               <div key={index}>
-                <img src={`http://localhost:4000/uploads/${photo}`} alt="" />
+                <Image src={photo} />
               </div>
             ))}
         </div>
@@ -46,28 +47,25 @@ export default function PublicPlaceGallery({ place }) {
         <div>
           {place.photos?.[0] && (
             <div>
-              <img
+              <Image
                 className="aspect-square object-cover"
-                src={`http://localhost:4000/uploads/${place.photos[0]}`}
-                alt=""
+                src={place.photos[0]}
               />
             </div>
           )}
         </div>
         <div className="grid ">
           {place.photos?.[1] && (
-            <img
+            <Image
               className="aspect-square object-cover"
-              src={`http://localhost:4000/uploads/${place.photos[1]}`}
-              alt=""
+              src={place.photos[1]}
             />
           )}
           <div className="overflow-hidden">
             {place.photos?.[2] && (
-              <img
+              <Image
                 className="aspect-square object-cover relative top-2 "
-                src={`http://localhost:4000/uploads/${place.photos[2]}`}
-                alt=""
+                src={place.photos[2]}
               />
             )}
           </div>

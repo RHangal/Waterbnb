@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import Image from "../pageComponents/Image";
 
 export default function IndexPage() {
   const [places, setPlaces] = useState([]);
@@ -17,9 +18,9 @@ export default function IndexPage() {
           <Link to={"/place/" + place._id} key={index}>
             <div className=" flex mb-2 bg-gray-500 rounded-2xl">
               {place.photos.length > 0 && (
-                <img
+                <Image
                   className="rounded-2xl aspect-square object-cover"
-                  src={"http://localhost:4000/uploads/" + place.photos[0]}
+                  src={place.photos[0]}
                   alt=""
                 />
               )}

@@ -35,7 +35,7 @@ export default function PublicPlacePage() {
           <br />
           Check-out: {place.checkOut}
           <br />
-          Maximun number of guests: {place.maxGuests}
+          Maximum number of guests: {place.maxGuests}
         </div>
         <div>
           <BookingWidget place={place} />

@@ -8,15 +8,16 @@ const Place = require("./models/Place");
 const Booking = require("./models/Booking");
 const cookieParser = require("cookie-parser");
 const iDownload = require("image-downloader");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const fs = require("fs");
-const { resolve } = require("path");
-const { rejects } = require("assert");
+const mime = require("mime-types");
 require("dotenv").config();
 const app = express();
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = "fasdgtrhrfgb35grrg345";
+const bucket = "waterbnb-booking-app";
 
 app.use(express.json());
 app.use(cookieParser());
@@ -28,7 +29,28 @@ app.use(
   })
 );
 
-mongoose.connect(process.env.MONGO_URL);
+async function uploadToS3(path, originalFileName, mimetype) {
+  const client = new S3Client({
+    region: "us-east-2",
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+    },
+  });
+  const parts = originalFileName.split(".");
+  const ext = parts[parts.length - 1];
+  const newFileName = Date.now() + "." + ext;
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Body: fs.readFileSync(path),
+      Key: newFileName,
+      ContentType: mimetype,
+      ACL: "public-read",
+    })
+  );
+  return `https://${bucket}.s3.amazonaws.com/${newFileName}`;
+}
 
 function getDataFromToken(req) {
   return new Promise((resolve, rejects) => {
@@ -40,10 +62,12 @@ function getDataFromToken(req) {
 }
 
 app.get("/test", (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   res.json("test ok");
 });
 
 app.get("/profile", (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
@@ -57,6 +81,7 @@ app.get("/profile", (req, res) => {
 });
 
 app.get("/user-places", (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   jwt.verify(token, jwtSecret, {}, async (err, userData) => {
     const { id } = userData;
@@ -65,21 +90,24 @@ app.get("/user-places", (req, res) => {
 });
 
 app.get("/places", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   res.json(await Place.find());
 });
 
 app.get("/places/:id", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { id } = req.params;
   res.json(await Place.findById(id));
 });
 
 app.get("/bookings", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const userData = await getDataFromToken(req);
   res.json(await Booking.find({ user: userData.id }).populate("place"));
 });
 
 app.post("/register", async (req, res) => {
-  //ihVR5Uodrxpojf8R
+  mongoose.connect(process.env.MONGO_URL);
   try {
     const { name, email, password } = req.body;
     const newUser = await User.create({
@@ -94,6 +122,7 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { email, password } = req.body;
   const registeredUser = await User.findOne({ email });
   if (registeredUser) {
@@ -128,26 +157,29 @@ app.post("/upload-by-link", async (req, res) => {
   const newName = "photo" + Date.now() + ".jpg";
   await iDownload.image({
     url: link,
-    dest: __dirname + "/uploads/" + newName,
+    dest: "/tmp/" + newName,
   });
-  res.json(newName);
+  const url = await uploadToS3(
+    "/tmp/" + newName,
+    newName,
+    mime.lookup("/tmp/" + newName)
+  );
+  res.json(url);
 });
 
-const photosMiddleware = multer({ dest: "uploads/" });
-app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
+const photosMiddleware = multer({ dest: "/tmp" });
+app.post("/upload", photosMiddleware.array("photos", 100), async (req, res) => {
   const uploadedFiles = [];
   for (let i = 0; i < req.files.length; i++) {
-    const { path, originalname } = req.files[i];
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
-    const newPath = path + "." + ext;
-    fs.renameSync(path, newPath);
-    uploadedFiles.push(newPath.replace("uploads/", ""));
+    const { path, originalname, mimetype } = req.files[i];
+    const url = await uploadToS3(path, originalname, mimetype);
+    uploadedFiles.push(url);
   }
   res.json(uploadedFiles);
 });
 
 app.post("/places", (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   const {
     title,
@@ -181,6 +213,7 @@ app.post("/places", (req, res) => {
 });
 
 app.put("/places", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const { token } = req.cookies;
   const {
     id,
@@ -218,6 +251,7 @@ app.put("/places", async (req, res) => {
 });
 
 app.post("/bookings", async (req, res) => {
+  mongoose.connect(process.env.MONGO_URL);
   const userData = await getDataFromToken(req);
   const {
     place,
